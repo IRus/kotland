@@ -5,3 +5,7 @@ build
 .vscode
 .data
 .DS_Store
+.env
+.venv
+etl
+deploy
