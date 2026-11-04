@@ -24,6 +24,7 @@ jobs:
           distribution: "liberica"
       - uses: gradle/actions/setup-gradle@v6
       - run: ./gradlew build
+      - run: python3 -m unittest discover -s etl/scripts -p 'test_history_answer_translations.py' -v
 
   docker:
     name: "Build Docker image"

@@ -1297,6 +1297,8 @@ class AppDatabase(
                 back_ru_pron_hint,
                 date_iso,
                 image_path,
+                history_answer_pl,
+                history_answer_ru,
                 tags_json
             FROM cards
             WHERE id = ? AND is_active = 1
@@ -1318,6 +1320,8 @@ class AppDatabase(
                     backRuPronHint = rs.getString("back_ru_pron_hint"),
                     dateIso = rs.getString("date_iso"),
                     imagePath = rs.getString("image_path"),
+                    historyAnswerPl = rs.getString("history_answer_pl"),
+                    historyAnswerRu = rs.getString("history_answer_ru"),
                     tags = decodeTags(rs.getString("tags_json")),
                 )
             }
@@ -1354,7 +1358,7 @@ class AppDatabase(
         val historyAnswerRu = input.historyAnswerRu.normalizeOptional()
         val normalizedBack =
             if (input.type == CardType.HISTORY_FACT) {
-                val fallback = historyAnswerPl ?: back.takeIf { it.isNotBlank() }
+                val fallback = historyAnswerRu ?: back.takeIf { it.isNotBlank() } ?: historyAnswerPl
                 fallback ?: return null
             } else {
                 back.takeIf { it.isNotBlank() } ?: return null

@@ -118,6 +118,15 @@ function emptyCardDraft() {
   };
 }
 
+function historyAnswers(card) {
+  const legacy = card.backRuTranslation || '';
+  const legacyIsRussian = /[А-Яа-яЁё]/u.test(legacy);
+  return {
+    pl: card.historyAnswerPl || (legacyIsRussian ? '' : legacy),
+    ru: card.historyAnswerRu || (legacyIsRussian ? legacy : ''),
+  };
+}
+
 function cardToDraft(card) {
   return {
     type: card.type || 'WORD',
@@ -127,8 +136,8 @@ function cardToDraft(card) {
     backRuPronHint: card.backRuPronHint || '',
     dateIso: card.dateIso || '',
     imagePath: card.imagePath || '',
-    historyAnswerPl: card.historyAnswerPl || (card.type === 'HISTORY_FACT' ? card.backRuTranslation || '' : ''),
-    historyAnswerRu: card.historyAnswerRu || '',
+    historyAnswerPl: card.type === 'HISTORY_FACT' ? historyAnswers(card).pl : '',
+    historyAnswerRu: card.type === 'HISTORY_FACT' ? historyAnswers(card).ru : '',
     tagsCsv: Array.isArray(card.tags) ? card.tags.join(', ') : '',
   };
 }
@@ -140,7 +149,7 @@ function draftToPayload(draft) {
     .filter(Boolean);
 
   const isHistory = draft.type === 'HISTORY_FACT';
-  const backRuTranslation = isHistory ? (draft.historyAnswerPl || draft.backRuTranslation || '') : draft.backRuTranslation;
+  const backRuTranslation = isHistory ? (draft.historyAnswerRu || draft.historyAnswerPl || '') : draft.backRuTranslation;
 
   return {
     type: draft.type,
@@ -391,8 +400,7 @@ function ReviewScreen({ deckCode }) {
   const tags = current.tags || [];
   const selectedVariant = audioVariants.find((v) => v.path === selectedAudioPath) || audioVariants[0];
   const isHistory = current.type === 'HISTORY_FACT';
-  const historyAnswerPl = current.historyAnswerPl || current.backRuTranslation || '';
-  const historyAnswerRu = current.historyAnswerRu || '';
+  const { pl: historyAnswerPl, ru: historyAnswerRu } = historyAnswers(current);
 
   return html`
     <section class="panel card-main">
@@ -446,12 +454,14 @@ function ReviewScreen({ deckCode }) {
         <div class="answer">
           ${isHistory
             ? html`
-                <div class="card-side-title">Answer (Polish)</div>
-                <div class="word">${historyAnswerPl}</div>
+                ${historyAnswerPl && html`
+                  <div class="card-side-title">Answer (Polish)</div>
+                  <div class="word" lang="pl">${historyAnswerPl}</div>
+                `}
                 ${historyAnswerRu &&
                 html`
-                  <div class="card-side-title" style="margin-top:8px;">Russian (optional)</div>
-                  <div class="transcript">${historyAnswerRu}</div>
+                  <div class="card-side-title" style="margin-top:8px;">Answer (Russian)</div>
+                  <div class="transcript" lang="ru">${historyAnswerRu}</div>
                 `}
               `
             : html`
@@ -513,8 +523,8 @@ function CardDetailScreen({ cardId }) {
       ${card.frontTranscript && html`<p><strong>Transcript:</strong> ${card.frontTranscript}</p>`}
       ${card.type === 'HISTORY_FACT'
         ? html`
-            <p><strong>Answer (Polish):</strong> ${card.historyAnswerPl || card.backRuTranslation}</p>
-            ${card.historyAnswerRu && html`<p><strong>Answer (Russian):</strong> ${card.historyAnswerRu}</p>`}
+            ${historyAnswers(card).pl && html`<p lang="pl"><strong>Answer (Polish):</strong> ${historyAnswers(card).pl}</p>`}
+            ${historyAnswers(card).ru && html`<p lang="ru"><strong>Answer (Russian):</strong> ${historyAnswers(card).ru}</p>`}
           `
         : html`
             <p><strong>Russian:</strong> ${card.backRuTranslation}</p>

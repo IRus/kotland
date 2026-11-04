@@ -206,13 +206,39 @@ class AppDatabaseTest {
                 ManageCardInput(
                     type = CardType.HISTORY_FACT,
                     frontTextPl = "Kto to?",
-                    backRuTranslation = "Opis",
+                    backRuTranslation = "Описание",
                     historyAnswerPl = "Opis",
+                    historyAnswerRu = "Описание",
                     tags = listOf("imported"),
                 ),
             )
             assertEquals(MutationStatus.OK, createCard.status)
             val cardId = createCard.value!!.id
+
+            assertEquals("Opis", createCard.value!!.historyAnswerPl)
+            assertEquals("Описание", createCard.value!!.historyAnswerRu)
+            assertEquals("Описание", createCard.value!!.backRuTranslation)
+
+            val updated = db.updateManagedCard(
+                user.email,
+                cardId,
+                ManageCardInput(
+                    type = CardType.HISTORY_FACT,
+                    frontTextPl = "Kto to?",
+                    historyAnswerPl = "Polski pisarz.",
+                    historyAnswerRu = "Польский писатель.",
+                    backRuTranslation = "Описание",
+                ),
+            )
+            assertEquals(MutationStatus.OK, updated.status)
+            assertEquals("Polski pisarz.", updated.value!!.historyAnswerPl)
+            assertEquals("Польский писатель.", updated.value!!.historyAnswerRu)
+            assertEquals("Польский писатель.", updated.value!!.backRuTranslation)
+            assertEquals("Polski pisarz.", db.getCard(cardId)!!.historyAnswerPl)
+            assertEquals("Польский писатель.", db.getCard(cardId)!!.historyAnswerRu)
+            val queued = db.getNextCards(user.email, "shared-import", 10).single()
+            assertEquals("Polski pisarz.", queued.historyAnswerPl)
+            assertEquals("Польский писатель.", queued.historyAnswerRu)
 
             assertEquals(MutationStatus.OK, db.deleteManagedCard(user.email, cardId))
         }

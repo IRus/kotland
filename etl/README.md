@@ -71,6 +71,36 @@ python3 scripts/export_manifest.py \
 ./gradlew :app:runImporter -PimportArgs="--manifest /absolute/path/etl/out/manifest/seed.jsonl --db /data/db/app.sqlite --media-root /data/library/media"
 ```
 
+## Polish translations for existing history answers
+
+`translations/history_answers.pl.json` contains Polish translations of the legacy
+Russian answers in the 426-card `history` deck. These are translations of the
+source material, not a factual update: OCR fragments and outdated claims in the
+original material still require editorial review.
+
+From the repository root, preview and apply to an existing database:
+
+```bash
+python3 etl/scripts/add_history_answer_translations.py --db .data/app.sqlite
+python3 etl/scripts/add_history_answer_translations.py --db .data/app.sqlite --apply
+```
+
+The script creates a SQLite backup before applying, fills only missing Polish
+answers, preserves Russian answers, and does not change card IDs or review data.
+It validates all translations before updating and is safe to rerun. Unknown
+answers stop the operation rather than leaving a partly translated deck.
+
+For a manifest, generate a separate bilingual file **before importing** so that
+reimporting does not erase translations:
+
+```bash
+python3 etl/scripts/add_history_answer_translations.py \
+  --input etl/out/pdf_cards_allmode/kp-kultura-polska/cards/all.refined.openai.with-images.jsonl \
+  --output etl/out/manifest/history_bilingual.jsonl
+```
+
+Both modes default to `--deck-code history` and leave other decks untouched.
+
 ## PDF one-off extractor (multi-approach)
 
 ```bash
